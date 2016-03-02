@@ -1,0 +1,55 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.2.0/css/reveal.css">
+        <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.2.0/css/theme/white.css">
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section>Slide 1</section>
+                <section>Slide 2</section>
+            </div>
+        </div>
+        <!--
+        Elixir with an eye of an Erlanger
+
+        Language improvements
+          - not a new infrastructure, uses that of Erlang
+          - cleaner language constructs
+          - macros against boilerplate
+          - macros for new construct
+          - unicode and string support
+
+        How Erlang communicty welcomed Elixir?
+
+        Actor model
+
+        Application (library, otp)
+          - {:ok, pid}
+
+        Supervision tree
+          - nice, there are a lot of good advices and docs
+            but how to move forward?
+          - separate children kinds
+            - simple one for one? similar worker processes
+            - one for all? let us have a clean start
+            - rest for
+
+        Don't call forward in the supervision tree
+        Call backward
+          - analyise the service dependencies
+        When to restart?
+
+        Examples
+          1. User service, session service
+          2. Save the ETS!
+          3. Transient, permanent
+          x. Chaos monkey
+
+        -->
+        <script src="http://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.2.0/js/reveal.min.js"></script>
+        <script>
+            Reveal.initialize();
+        </script>
+    </body>
+</html>
