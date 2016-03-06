@@ -1,44 +1,311 @@
 <html>
     <head>
-        <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.2.0/css/reveal.css">
-        <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.2.0/css/theme/white.css">
+        <link rel="stylesheet" href="../reveal.js/css/reveal.css">
+        <link rel="stylesheet" href="../reveal.js/css/theme/white.css">
+        <link rel="stylesheet" href="../reveal.js/lib/css/zenburn.css">
+        <style type="text/css">
+        body { background-color: #f2f4d5; }
+        </style>
     </head>
     <body>
         <div class="reveal">
             <div class="slides">
-                <section>Slide 1</section>
-                <section>Slide 2</section>
+                <section>
+                    <h1>Elixir</h1>
+                    <h3><i>with an eye of an Erlanger</i></h3>
+                    <br/>
+                    <br/><b>Rich&aacute;rd J&oacute;n&aacute;s</b>
+                    <br/><br/>Se&ntilde;or Erlang Developer
+                    <br/>Erlang Solutions Ltd
+                    <br/>Budapest, Hungary
+                    <br/>http://jonasrichard.com
+                </section>
+
+                <section>
+                    <h2>Why am I here?</h2>
+
+                    <img src="images/Barcelona-marathon.jpg">
+                    <br/><b>Barcelona marathon</b>
+                    <br/>My 11th marathon run
+                </section>
+
+                <!-- Erlang sections -->
+                <section>
+                    <section>
+                        <h2>What is Erlang?</h2>
+                        
+                        <ul>
+                            <li><img src="images/Agner Krarup Erlang.jpg" style="float: right">
+                                named after Agner Krarup Erlang, Danish matematician (traffic engineering, queueing theory)</li>
+                            <li>functional language appeared in 1986 at Ericson</li>
+                            <li>Erlang VM executes beam code</li>
+                            <li>process-based, soft-realtime</li>
+                            <li>share "almost" nothing, message passing</li>
+                            <li>supports distribution</li>
+                            <li>let it crash</li>
+                        </ul>
+                    </section>
+                    <section>
+                        <h2>My simple slow dict</h2>
+                        <pre><code data-trim data-noescape class="hljs erlang">
+-module(simple).
+-export([new/0, put/3, get/2]).
+
+new() -> {dict, []}.
+
+put(Key, Value, {dict, Values}) -> {ok, put2(Key, Value, Values)}.
+
+put2(Key, Value, []) -> [{Key, Value}];
+put2(Key, Value, [{Key, _} | Rest]) -> [{Key, Value} | Rest];
+put2(Key, Value, [Pair | Rest]) -> [Pair | put2(Key, Value, Rest)].
+
+get(Key, {dict, Values}) -> get2(Key, Values).
+
+get2(Key, []) -> {error, not_found};
+get2(Key, [{Key, Value} | _Rest]) -> {ok, Value};
+get2(Key, {_ | Rest}) -> get2(Key, Rest).
+                        </code></h2>
+                    </section>
+                    <section>
+                        <h2>Try that stuff</h2>
+                        <pre><code data-trim data-noescape class="hljs erlang">
+-module(my_db).
+-export([new/0, put/3, get/2]).
+
+put_users(Users) ->
+    lists:foldl(
+      fun(User, Acc) ->
+          {ok, NewAcc} = simple:put(User, Acc),
+          NewAcc
+      end, Users, simple:new()).
+
+safe_put_user(UserId, UserName, Db) ->
+    case simple:get(UserId, Db) of
+        {ok, {_Id, Name}} ->
+            {error, "User already there"};
+        {error, not_found} ->
+            simple:put(UserId, UserName, Db)
+    end.
+                        </code></h2>
+                    </section>
+                </section>
+
+                <!-- Elixir intro -->
+                <section>
+                    <section>
+                        <h2>New kid on the VM, why?</h2>
+
+                        <ul>
+                            <li>Erlang is 30 years old</li>
+                            <li>Erlang VM is being continuously developed</li>
+                            <li>a looot of boilerplate, macros are not cool in Erlang</li>
+                            <li>modern things: utf-8, strings</li>
+                            <li>unified API, thanks to |&gt;</li>
+                            <li>cleaner language contructs</li>
+                            <li>macros done right!</li>
+                            <li>easy to create new language constructs</li>
+                        </ul>
+                    </section>
+                    <section>
+                        <img src="images/freddy-meme.jpg" style="float: right">
+                        <h3>Mix - Unified build environment</h3>
+                        <br/>no rebar, erlang.mk,
+                        rake, make, grunt, pip, maven, ivy, etc.
+                    </section>
+                </section>
+
+                <section>
+                    <h2>Processes, still</h2>
+
+                    <ul>
+                        <li><code>pid = spawn fn -> loop() end</code></li>
+                        <li><code>send(pid, {:cmd, "cd .."})</code></li>
+                        <li><code>receive do {:cmd, Cmd} -> :os.cmd(Cmd) end</code></li>
+                        <li>monitor - notify about process die</li>
+                        <li>link - live and die together</li>
+                        <li>trap_exit - catched linked exit signals</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <section>
+                        <h3>Coordinator - 1</h3>
+                        <pre><code data-trim data-noescape class="hljs elixir">
+defmodule Coordinator do
+  require Logger
+
+  def start() do
+    pid = spawn fn -> loop([]) end
+    Process.register(pid, Coordinator)
+  end
+                        </code></pre>
+                    </section>
+
+                    <section>
+                        <h3>Coordinator - 2</h3>
+                        <pre><code data-trim data-noescape class="hljs elixir">
+  def loop(agents) do
+    receive do
+      {:new, agentpid} ->
+        Process.monitor(agentpid)
+        send(agentpid, {:registered, self()})
+        loop([agentpid | agents])
+      {:exec, cmd} ->
+        agents |> Enum.each(fn(pid) -> send(pid, {:exec, cmd}) end)
+        loop(agents)
+      {:DOWN, _ref, :process, agent, _reason} ->
+        List.delete(agents, agent) |> loop
+    end
+  end
+end
+                        </code></pre>
+                    </section>
+
+                    <section>
+                        <h3>Agent - 1</h3>
+                        <pre><code data-trim data-noescape class="hljs elixir">
+defmodule MyAgent do
+  require Logger
+
+  def start(name) do
+    spawn fn -> passive(name) end
+  end
+
+  def mysleep() do
+    receive do
+    after 1_000 ->
+      :ok
+    end
+  end
+                        </code></pre>
+                    </section>
+
+                    <section>
+                        <h3>Agent - 2</h3>
+                        <pre><code data-trim data-noescape class="hljs elixir">
+  def passive(name) do
+    receive do
+      {:registered, coord} ->
+        Process.monitor(coord)
+        active(name, coord)
+      any ->
+        passive(name)
+    after
+      3_000 ->
+        case Process.whereis(Coordinator) do
+          nil -> :ok
+          coord -> send(coord, {:new, self()})
+        end
+        passive(name)
+    end
+  end
+                        </code></pre>
+                    </section>
+
+                    <section>
+                        <h3>Agent - 3</h3>
+                        <pre><code data-trim data-noescape class="hljs elixir">
+  def active(name, coord) do
+    receive do
+      {:exec, cmd} ->
+        mysleep()
+        active(name, coord)
+      {:DOWN, _ref, :process, coord, reason} ->
+        passive(name)
+      any ->
+        active(name, coord)
+    end
+  end
+                        </code></pre>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Supervisors</h2>
+                        <h4>one for all</h4>
+
+                        <div>
+                            <img src="images/restart-one-for-all.png">
+                        </div>
+
+                        Depending children should be handled in that way
+                    </section>
+
+                    <section>
+                        <h2>Supervisors</h2>
+                        <h4>one for one</h4>
+
+                        <div>
+                            <img src="images/restart-one-for-one.png">
+                        </div>
+
+                        Independent children should be handled in that way
+                    </section>
+
+                    <section>
+                        <h2>Supervisors</h2>
+                        <h4>rest for one</h4>
+
+                        <div>
+                            <img src="images/restart-rest-for-one.png">
+                        </div>
+
+                        When restart order decide the dependency
+                    </section>
+                </section>
+
+                <section>
+                    <h2>But what really is a process?</h2>
+
+                    <ul>
+                        <li>isolate failure (!)</li>
+                        <li>holding state</li>
+                        <li>serialize a resource</li>
+                        <li>isolate computation</li>
+                        <li>decomposition</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>To managers: don't beat CAP</h2>
+
+                    <ul>
+                        <li>consistency</li>
+                        <li>availability</li>
+                        <li>partition tolerance</li>
+                        <li>choose two, third can be hold with compromises</li>
+                        <li>Riak (AP), MySQL (C), RabbitMQ (CP)</li>
+                        <li>Two phase commit (CP)</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Consensus problem</h2>
+                    
+                    <p>Byzantine generals problem described by Leslie Lamport in 1982.
+                    Generals need to be agreed when to attack or retreat, but messenger
+                    can be killed anytime.</p>
+                    <p>Proven that there is no such algorithm with that conditions.</p>
+                    <p>How to keep data in sync between replicas?!</p>
+                    <p>Are you dead or is it just a netsplit?</p>
+                </section>
+
+                <section>
+                    <h2>Takeaways</h2>
+
+                    <ul>
+                        <li>plan the system, decompose it to processes</li>
+                        <li>test the fails (chaos monkey)</li>
+                        <li>load test (can lead to another type of errors)</li>
+                        <li>embrace, expect failures, make a supervisor</li>
+                        <li>isolate a microkernel which NEVER stops</li>
+                    </ul>
+                </section>
             </div>
         </div>
         <!--
-        Elixir with an eye of an Erlanger
 
-        Language improvements
-          - not a new infrastructure, uses that of Erlang
-          - cleaner language constructs
-          - macros against boilerplate
-          - macros for new construct
-          - unicode and string support
-
-        How Erlang communicty welcomed Elixir?
-
-        Actor model
-
-        Application (library, otp)
-          - {:ok, pid}
-
-        Supervision tree
-          - nice, there are a lot of good advices and docs
-            but how to move forward?
-          - separate children kinds
-            - simple one for one? similar worker processes
-            - one for all? let us have a clean start
-            - rest for
-
-        Don't call forward in the supervision tree
-        Call backward
-          - analyise the service dependencies
-        When to restart?
 
         Examples
           1. User service, session service
@@ -47,9 +314,16 @@
           x. Chaos monkey
 
         -->
-        <script src="http://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.2.0/js/reveal.min.js"></script>
+        <script src="../reveal.js/lib/js/head.min.js"></script>
+        <script src="../reveal.js/js/reveal.js"></script>
         <script>
-            Reveal.initialize();
+        Reveal.initialize({
+            dependencies: [
+                { src: '../reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+            ],
+            parallaxBackgroundImage: 'images/Erlang-background.png',
+            parallaxBackgroundSize: '1481px 740px'
+        });
         </script>
     </body>
 </html>

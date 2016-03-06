@@ -1,5 +1,6 @@
 defmodule SaveEts do
   use Application
+  require Logger
 
   def start do
     Application.start(:save)
@@ -8,8 +9,12 @@ defmodule SaveEts do
   def start(_, _) do
     import Supervisor.Spec
 
-    children = [worker(Task, [SaveEts, :loop, []])]
-    opts = [strategy: :one_for_one, name: SaveEts.Supervisor]
+    children = [
+      worker(Holder, []),
+      worker(Session, [])
+    ]
+    Logger.info("Children: #{inspect children}")
+    opts = [strategy: :rest_for_one, name: SaveEts.Supervisor]
     Supervisor.start_link(children, opts)
   end
 

@@ -9,7 +9,7 @@ defmodule SaveEts.Mixfile do
   end
 
   def application do
-    [applications: [],
+    [applications: [:sasl, :logger],
      mod: {SaveEts, []}]
   end
 
