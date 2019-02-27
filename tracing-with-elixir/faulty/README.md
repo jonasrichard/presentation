@@ -1,21 +1,30 @@
 # Faulty
 
-**TODO: Add description**
+A faulty application to demonstrate tracing.
 
-## Installation
+TODO:
+ * disable console log, enable file log
+ * show redbug more
+ * show recon
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `faulty` to your list of dependencies in `mix.exs`:
+## Trace with Rexbug
+
+## Trace with dbg
+
+`dbg` seems to be more powerful than `Rexbug`.
+
+Let us what messages the queue gets.
 
 ```elixir
-def deps do
-  [
-    {:faulty, "~> 0.1.0"}
-  ]
-end
+Dbg.trace(Faulty.Queue, [:messages, :receive])
+Dbg.clear(Faulty.Queue)
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/faulty](https://hexdocs.pm/faulty).
+What messages the input generator sends.
+
+```elixir
+Supervisor.which_children(Faulty.InputSup)
+Dbg.trace(Faulty.Input, [:messages, :send])
+Dbg.clear(Faulty.Input)
+```
 
