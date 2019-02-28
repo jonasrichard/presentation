@@ -28,3 +28,14 @@ Dbg.trace(Faulty.Input, [:messages, :send])
 Dbg.clear(Faulty.Input)
 ```
 
+## Trace with :dbg
+
+A low-level tracer application
+
+```
+:dbg.tracer()
+:dbg.p(:all, :c)
+:dbg.tp(:lists, :seq:, 2, [])
+:dbg.tpl # local calls
+```
+

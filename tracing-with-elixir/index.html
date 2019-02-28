@@ -1,0 +1,39 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="../reveal.js/css/reveal.css">
+        <link rel="stylesheet" href="../reveal.js/css/theme/white.css">
+        <link rel="stylesheet" href="../reveal.js/lib/css/zenburn.css">
+        <style type="text/css">
+        body { background-color: #f2f4d5; }
+        </style>
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section>
+                    <h1>Tracing with Elixir</h1>
+                    <h3><i>and Erlang</i></h3>
+                    <br/><br/><br/>
+                    <br/><b>Rich&aacute;rd J&oacute;n&aacute;s</b>
+                </section>
+
+            </div>
+        </div>
+
+        <script src="../reveal.js/lib/js/head.min.js"></script>
+        <script src="../reveal.js/js/reveal.js"></script>
+        <script>
+        Reveal.initialize({
+            dependencies: [
+                {
+                  src: '../reveal.js/plugin/highlight/highlight.js',
+                  async: true,
+                  callback: function() { hljs.initHighlightingOnLoad(); }
+                }
+            ],
+            parallaxBackgroundImage: 'images/Erlang-background.png',
+            parallaxBackgroundSize: '1481px 740px'
+        });
+        </script>
+    </body>
+</html>

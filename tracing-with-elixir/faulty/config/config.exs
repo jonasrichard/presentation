@@ -1,12 +1,14 @@
-# This file is responsible for configuring your application
-# and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
-# This configuration is loaded before any dependency and is restricted
-# to this project. If another project depends on this project, this
-# file won't be loaded nor affect the parent project. For this reason,
-# if you want to provide default values for your application for
-# third-party users, it should be done in your "mix.exs" file.
+config :logger,
+  backends: [{LoggerFileBackend, :file}],
+  format: "[$level] $message\n",
+  handle_opt_reports: true,
+  handle_sasl_reports: true
+
+config :logger, :file,
+  path: "log/faulty.log",
+  level: :debug
 
 # You can configure your application as:
 #
