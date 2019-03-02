@@ -9,7 +9,7 @@
           background-color: #f2f4d5;
           font-family: 'PT Sans', sans-serif;
         }
-        .reveal h1, .reveal h3 {
+        .reveal h1, .reveal h2, .reveal h3 {
           font-family: 'Laila', serif;
         }
         .reveal pre {
@@ -27,9 +27,83 @@
                 </section>
 
                 <section>
-                  <h3>Fight of VMs</h3>
+                  <h2>Fight of VMs</h2><br/>
 
-                  <p>Erlang VM is soft-realtime</p>
+                  <p>Erlang VM is soft-realtime (preemptive)</p>
+                  <p>Interpreter</p>
+                  <p>Register-based (JVM is stack-based)</p>
+                  <p>Observable (attach with console)</p>
+                  <p>GC is more local</p>
+                  <p>Process-oriented</p>
+                </section>
+
+                <section>
+                <section>
+                  <h2>Tracing</h2><br/>
+
+                  <pre><code data-trim data-noescape class="hljs erlang">
+
+erlang:trace(Pid, true, Flags)
+
+  Pid = pid() | port() | all | processes | ports | existing | new
+
+  Flags = send | 'receive' | call | return_to | running |
+          exiting | garbage_collection |
+          {tracer, pid()} | {tracer, Mod, State}
+
+> ets:fun2ms(fun({X, 1}) -> true end).
+[{{'$1',1},[],[true]}]
+</code></pre>
+                </section>
+
+                <section>
+                  <h2>:redbug - for Erlang</h2><br/>
+
+                  <p>Very easy to use for Erlang, it supports return value (!)</p>
+                  <pre><code data-trim data-noescape class="hljs elixir">
+:redbug.start('\'Elixir.Enum\':random -> return',
+              time: 20_000, msgs: 20)
+
+% 17:45:54 <0.203.0>({'Elixir.Faulty.Input',init,1})
+% 'Elixir.Enum':random(['+','-','*','/'])
+
+% 17:45:54 <0.203.0>({'Elixir.Faulty.Input',init,1})
+% 'Elixir.Enum':random/1 -> '*'
+
+:redbug.start('\'Elixir.Faulty.Queue\':do_add(X) when length(X) < 2')
+</code></pre>
+<!-- ' -->
+                </section>
+
+                <section>
+                  <h2>Rexbug - for Elixir</h2><br/>
+
+                  <pre><code data-trim data-noescape class="hljs elixir">
+iex(27)> Rexbug.start("Enum.random/_ :: return;stack")
+{115, 1}
+
+# 17:55:55 #PID<0.203.0> Faulty.Input.init/1
+# Enum.random([:+, :-, :*, :/])
+#   Faulty.Input.handle_info/2
+#   :gen_server.try_dispatch/4
+#   :gen_server.handle_msg/6
+#   :proc_lib.init_p_do_apply/3
+
+# 17:55:55 #PID<0.203.0> Faulty.Input.init/1
+# Enum.random/1 -> :-
+</code></pre>
+                </section>
+                </section>
+                <section>
+                  <h2>:dbg - for Erlang</h2><br/>
+
+                  <p>You need to start runtime_tools application</p>
+
+                  <pre><code data-trim data-noescape class="hljs elixir">
+> dbg.tracer().
+> dbg.tpl(lists, seq, 2, []).
+> dbg.p(all, c).       # all processes, call tracing
+</code></pre>
                 </section>
             </div>
         </div>
